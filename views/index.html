@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Issue Tracker</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="/public/style.css">
+  </head>
+  <body>
+    <header>
+      <h1>Issue Tracker</h1>
+    </header>
+    <main>
+      <section id="userstories">
+        <h2>User Stories</h2>
+        <ol>
+          <li>You can POST /api/issues/{projectname} with form data containing required fields (issue_title, issue_text, created_by) and optional fields (assigned_to, status_text).</li>
+          <li>The POST request will return the created object with all fields including _id, created_on, updated_on, and open (default true).</li>
+          <li>If required fields are missing, the response will be { error: 'required field(s) missing' }.</li>
+          <li>You can GET /api/issues/{projectname} for an array of all issues for that project.</li>
+          <li>You can filter requests by passing query parameters (e.g., /api/issues/{project}?open=false).</li>
+          <li>You can PUT /api/issues/{projectname} with an _id and fields to update.</li>
+          <li>You can DELETE /api/issues/{projectname} with an _id to delete an issue.</li>
+        </ol>
+      </section>
+      <hr>
+      <section id="examples">
+        <h2>Example Usage</h2>
+        <h3>GET Examples</h3>
+        <code>/api/issues/{project}</code><br>
+        <code>/api/issues/{project}?open=true&assigned_to=Joe</code>
+        
+        <h3>Example Return</h3>
+        <pre><code>[
+  {
+    "_id": "5871dda29faedc3491ff93bb",
+    "issue_title": "Fix error in posting data",
+    "issue_text": "When we post data it has an error.",
+    "created_on": "2017-01-08T06:35:14.240Z",
+    "updated_on": "2017-01-08T06:35:14.240Z",
+    "created_by": "Joe",
+    "assigned_to": "Joe",
+    "open": true,
+    "status_text": "In QA"
+  },
+  ...
+]</code></pre>
+      </section>
+      <hr>
+      <section id="testui">
+        <h2>API Tests</h2>
+        <p>Go to <a href="/apitest/">/apitest/</a> to test the API endpoints.</p>
+      </section>
+    </main>
+    <footer>
+      <p>Built for freeCodeCamp Quality Assurance Certification</p>
+    </footer>
+  </body>
+</html>

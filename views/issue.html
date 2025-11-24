@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Issue Tracker</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="/public/style.css">
+  </head>
+  <body>
+    <header>
+      <h1>Issue Tracker</h1>
+    </header>
+    <main>
+      <section>
+        <h2 id="projectTitle">Loading...</h2>
+        
+        <div class="form-container">
+          <h3>Submit Issue</h3>
+          <form id="newIssueForm">
+            <input type="text" name="issue_title" placeholder="* Title" required><br>
+            <textarea name="issue_text" placeholder="* Text" required></textarea><br>
+            <input type="text" name="created_by" placeholder="* Created by" required><br>
+            <input type="text" name="assigned_to" placeholder="Assigned to (optional)"><br>
+            <input type="text" name="status_text" placeholder="Status text (optional)"><br>
+            <button type="submit">Submit Issue</button>
+          </form>
+          <div id="submitMessage"></div>
+        </div>
+
+        <hr>
+
+        <div class="form-container">
+          <h3>Update Issue</h3>
+          <form id="updateIssueForm">
+            <input type="text" name="_id" placeholder="* Issue ID" required><br>
+            <input type="text" name="issue_title" placeholder="Title"><br>
+            <textarea name="issue_text" placeholder="Text"></textarea><br>
+            <input type="text" name="created_by" placeholder="Created by"><br>
+            <input type="text" name="assigned_to" placeholder="Assigned to"><br>
+            <input type="text" name="status_text" placeholder="Status text"><br>
+            <label>
+              <input type="checkbox" name="open" value="false"> Close issue
+            </label><br>
+            <button type="submit">Update Issue</button>
+          </form>
+          <div id="updateMessage"></div>
+        </div>
+
+        <hr>
+
+        <div class="form-container">
+          <h3>Delete Issue</h3>
+          <form id="deleteIssueForm">
+            <input type="text" name="_id" placeholder="* Issue ID" required><br>
+            <button type="submit">Delete Issue</button>
+          </form>
+          <div id="deleteMessage"></div>
+        </div>
+
+        <hr>
+
+        <div>
+          <h3>Issues</h3>
+          <div id="issuesList">Loading issues...</div>
+        </div>
+      </section>
+    </main>
+
+    <script>
+      // Get project name from URL
+      const pathArray = window.location.pathname.split('/');
+      const project = pathArray[1];
+      document.getElementById('projectTitle').innerText = 'Project: ' + project;
+
+      // Load issues on page load
+      loadIssues();
+
+      // Submit new issue
+      document.getElementById('newIssueForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const formData = new FormData(e.target);
+        const data = Object.fromEntries(formData.entries());
+
+        try {
+          const response = await fetch(`/api/issues/${project}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+          });
+          const result = await response.json();
+          
+          if (result.error) {
+            document.getElementById('submitMessage').innerHTML = 
+              `<p style="color: red;">Error: ${result.error}</p>`;
+          } else {
+            document.getElementById('submitMessage').innerHTML = 
+              `<p style="color: green;">Issue created successfully! ID: ${result._id}</p>`;
+            e.target.reset();
+            loadIssues();
+          }
+        } catch (error) {
+          document.getElementById('submitMessage').innerHTML = 
+            `<p style="color: red;">Error: ${error.message}</p>`;
+        }
+      });
+
+      // Update issue
+      document.getElementById('updateIssueForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const formData = new FormData(e.target);
+        const data = Object.fromEntries(formData.entries());
+        
+        // Handle checkbox
+        if (data.open === 'false') {
+          data.open = false;
+        } else {
+          delete data.open;
+        }
+
+        // Remove empty fields
+        Object.keys(data).forEach(key => {
+          if (data[key] === '' && key !== '_id') delete data[key];
+        });
+
+        try {
+          const response = await fetch(`/api/issues/${project}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+          });
+          const result = await response.json();
+          
+          if (result.error) {
+            document.getElementById('updateMessage').innerHTML = 
+              `<p style="color: red;">Error: ${result.error}</p>`;
+          } else {
+            document.getElementById('updateMessage').innerHTML = 
+              `<p style="color: green;">${result.result}</p>`;
+            e.target.reset();
+            loadIssues();
+          }
+        } catch (error) {
+          document.getElementById('updateMessage').innerHTML = 
+            `<p style="color: red;">Error: ${error.message}</p>`;
+        }
+      });
+
+      // Delete issue
+      document.getElementById('deleteIssueForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const formData = new FormData(e.target);
+        const data = Object.fromEntries(formData.entries());
+
+        try {
+          const response = await fetch(`/api/issues/${project}`, {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+          });
+          const result = await response.json();
+          
+          if (result.error) {
+            document.getElementById('deleteMessage').innerHTML = 
+              `<p style="color: red;">Error: ${result.error}</p>`;
+          } else {
+            document.getElementById('deleteMessage').innerHTML = 
+              `<p style="color: green;">${result.result}</p>`;
+            e.target.reset();
+            loadIssues();
+          }
+        } catch (error) {
+          document.getElementById('deleteMessage').innerHTML = 
+            `<p style="color: red;">Error: ${error.message}</p>`;
+        }
+      });
+
+      // Load and display issues
+      async function loadIssues() {
+        try {
+          const response = await fetch(`/api/issues/${project}`);
+          const issues = await response.json();
+          
+          const issuesList = document.getElementById('issuesList');
+          
+          if (issues.length === 0) {
+            issuesList.innerHTML = '<p>No issues found for this project.</p>';
+            return;
+          }
+
+          let html = '<table border="1" cellpadding="5" style="width: 100%; border-collapse: collapse;">';
+          html += '<tr><th>ID</th><th>Title</th><th>Text</th><th>Created By</th><th>Assigned To</th><th>Status</th><th>Open</th><th>Created</th><th>Updated</th></tr>';
+          
+          issues.forEach(issue => {
+            html += `<tr>
+              <td>${issue._id}</td>
+              <td>${issue.issue_title}</td>
+              <td>${issue.issue_text}</td>
+              <td>${issue.created_by}</td>
+              <td>${issue.assigned_to || '-'}</td>
+              <td>${issue.status_text || '-'}</td>
+              <td>${issue.open ? 'Yes' : 'No'}</td>
+              <td>${new Date(issue.created_on).toLocaleString()}</td>
+              <td>${new Date(issue.updated_on).toLocaleString()}</td>
+            </tr>`;
+          });
+          
+          html += '</table>';
+          issuesList.innerHTML = html;
+        } catch (error) {
+          document.getElementById('issuesList').innerHTML = 
+            `<p style="color: red;">Error loading issues: ${error.message}</p>`;
+        }
+      }
+    </script>
+  </body>
+</html>
